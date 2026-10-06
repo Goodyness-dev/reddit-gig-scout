@@ -19,7 +19,7 @@ function loadSubreddits() {
   } catch (e) {
     console.error('Error reading subreddits.json:', e.message);
   }
-  return ['forhire', 'slavelabour', 'freelance_forhire', 'jobbit', 'RemoteJobs', 'SideJobs'];
+  return ['forhire', 'slavelabour', 'freelance_forhire', 'jobbit', 'RemoteJobs', 'CryptoJobsList', 'SideJobs'];
 }
 
 function saveSubreddits(subs) {
@@ -34,34 +34,56 @@ let monitoredSubs = loadSubreddits();
 
 const SKILL_RULES = [
   {
+    category: 'Web3 / Crypto / Solidity / Smart Contracts',
+    keywords: [
+      'web3', 'crypto', 'solidity', 'smart contract', 'smart contracts', 'ethereum', 'eth', 'solana', 'sol',
+      'ethers.js', 'wagmi', 'defi', 'token', 'erc20', 'erc721', 'nft', 'evm', 'dapp', 'web3 developer',
+      'blockchain', 'bounty', 'crypto bot', 'trading bot', 'airdrop'
+    ],
+    pitch: (title, sub) => `Hi! Reaching out regarding: "${title}".\n\nI am a Web3 developer experienced in building DApps, smart contracts (Solidity), ethers.js/wagmi integrations, and prediction engines (TxODDS hackathon finalist on Solana & EVM).\n\nGitHub: https://github.com/Goodyness-dev\nEmail: adewolegoodness22@gmail.com\n\nLet me know the scope and requirements, ready to help you ship this promptly!`
+  },
+  {
     category: 'React / Frontend / Web Development',
-    keywords: ['react', 'nextjs', 'next.js', 'frontend', 'front-end', 'tailwind', 'typescript', 'javascript', 'html', 'landing page', 'web dev', 'web developer', 'website'],
+    keywords: [
+      'react', 'nextjs', 'next.js', 'frontend', 'front-end', 'tailwind', 'typescript', 'javascript', 'html',
+      'landing page', 'web dev', 'web developer', 'website', 'css', 'vue', 'full stack', 'fullstack', 'ui dev'
+    ],
     pitch: (title, sub) => sub === 'slavelabour'
       ? `Comment on post: $bid\n\nDM to send:\nHi! I saw your post regarding: "${title}". I am a software developer experienced in React, Next.js, TypeScript, and Tailwind CSS. Clean, responsive UI with fast turnaround.\n\nGitHub: https://github.com/Goodyness-dev\nHappy to start right now!`
       : `Hi! Reaching out regarding your post: "${title}".\n\nI am a software developer experienced in React, Next.js, TypeScript, and modern frontend development. I build fast, responsive user interfaces and robust API integrations.\n\nGitHub: https://github.com/Goodyness-dev\nEmail: adewolegoodness22@gmail.com\n\nI'd love to help you build this. When can we discuss requirements?`
   },
   {
     category: 'Python / Web Scraping / Bots / Automation',
-    keywords: ['python', 'scraper', 'scraping', 'selenium', 'playwright', 'bot', 'script', 'crawl', 'automation', 'api integration', 'telegram bot'],
+    keywords: [
+      'python', 'scraper', 'scraping', 'selenium', 'playwright', 'bot', 'script', 'crawl', 'automation',
+      'api integration', 'telegram bot', 'discord bot', 'automate'
+    ],
     pitch: (title, sub) => sub === 'slavelabour'
       ? `Comment on post: $bid\n\nDM to send:\nHi! I saw your post for: "${title}". I have solid experience writing Python automation scripts, web scrapers, and bot integrations (including reverse-engineering APIs). Fast and clean delivery.\n\nGitHub: https://github.com/Goodyness-dev\nLet me know details and I'll jump on it!`
       : `Hi! Reaching out regarding: "${title}".\n\nI am a developer with strong Python experience (Stanford Code in Place certified). I specialize in automated web scrapers, data pipelines, bots, and reverse-engineering complex APIs.\n\nGitHub: https://github.com/Goodyness-dev\nEmail: adewolegoodness22@gmail.com\n\nHappy to deliver a working solution promptly!`
   },
   {
-    category: 'Web3 / Crypto / Solidity',
-    keywords: ['web3', 'solidity', 'smart contract', 'ethereum', 'ethers', 'solana', 'crypto', 'token'],
-    pitch: (title, sub) => `Hi! Reaching out regarding: "${title}".\n\nI am a Web3 developer experienced in building DApps, smart contracts, ethers.js/wagmi integrations, and prediction engines (TxODDS hackathon finalist).\n\nGitHub: https://github.com/Goodyness-dev\nEmail: adewolegoodness22@gmail.com\n\nLet me know how I can help you ship this!`
-  },
-  {
-    category: 'AI Training / Annotation / Evaluation',
-    keywords: ['annotation', 'data labeling', 'ai training', 'prompt engineer', 'evaluation', 'rlhf', 'model review', 'dataset'],
+    category: 'AI Training / Annotation / Evaluation / LLMs',
+    keywords: [
+      'annotation', 'data labeling', 'data labelling', 'ai training', 'prompt engineer', 'prompting',
+      'evaluation', 'rlhf', 'model review', 'dataset', 'llm evaluation', 'model training', 'ai testing'
+    ],
     pitch: (title, sub) => `Hi! I saw your post regarding: "${title}".\n\nI have direct experience in AI content evaluation, text classification, and data annotation with Atlas Capture and independent projects. High accuracy, strict guideline adherence, and edge-case reporting.\n\nEmail: adewolegoodness22@gmail.com\nReady to begin immediately!`
   },
   {
-    category: 'Quick Tasks & General Gigs',
-    keywords: ['need help building', 'need developer', 'quick task', 'fix bug', 'simple script', 'side gig', 'small task'],
+    category: 'Paid Internships / Junior Developer Roles',
+    keywords: [
+      'intern', 'internship', 'junior developer', 'entry level developer', 'junior dev', 'paid intern'
+    ],
+    pitch: (title, sub) => `Hi! Reaching out regarding the opportunity: "${title}".\n\nI am a Computer Science & Engineering student at Obafemi Awolowo University with active experience building production Web3 & full-stack apps (React, Next.js, TypeScript, Python). I also hold a Stanford Code in Place Python certificate.\n\nGitHub: https://github.com/Goodyness-dev\nEmail: adewolegoodness22@gmail.com\n\nI would love the opportunity to contribute to your team!`
+  },
+  {
+    category: 'Quick Paid Tasks & Gigs ($ Budget)',
+    keywords: [
+      'need a developer', 'looking for a developer', 'fix bug', 'simple script', 'side gig', 'quick task', 'urgent help'
+    ],
     pitch: (title, sub) => sub === 'slavelabour'
-      ? `Comment on post: $bid\n\nDM to send:\nHi! I can help you knock this out right away. Computer Engineering student with broad software experience. Let me know!`
+      ? `Comment on post: $bid\n\nDM to send:\nHi! I can help you knock this out right away. Computer Engineering student with broad software experience. Let's chat!`
       : `Hi! Reaching out regarding: "${title}".\n\nI am available to resolve this for you immediately. Software developer with experience across web dev, debugging, and scripts.\n\nGitHub: https://github.com/Goodyness-dev\nEmail: adewolegoodness22@gmail.com`
   }
 ];
@@ -149,7 +171,7 @@ async function handleTelegramCommand(text) {
   } else if (cmd === '/list') {
     await sendTelegramMessage(`📋 Currently monitored subreddits (${monitoredSubs.length}):\n\n` + monitoredSubs.map(s => '• r/' + s).join('\n') + `\n\nTip: Send /add [sub] or /remove [sub] anytime!`);
   } else if (cmd === '/help') {
-    await sendTelegramMessage(`💡 Bot Commands:\n\n/list - View monitored subreddits\n/add [sub] - Add a subreddit (e.g. /add SideJobs)\n/remove [sub] - Remove a subreddit\n/status - Check scout health`);
+    await sendTelegramMessage(`💡 Bot Commands:\n\n/list - View monitored subreddits\n/add [sub] - Add a subreddit (e.g. /add SideJobs)\n/remove [sub] - Remove a subreddit (e.g. /remove SideJobs)\n/status - Check scout health`);
   } else if (cmd === '/status') {
     await sendTelegramMessage(`⚡ Bot is running live!\nTotal subreddits: ${monitoredSubs.length}\nCheck interval: ${INTERVAL_MS / 1000}s\nSeen posts: ${seenPosts.size}`);
   }
@@ -218,14 +240,18 @@ function matchJob(entry, sub) {
     return null;
   }
 
-  // Positive hiring check
+  // Positive hiring check (must be a job offer / gig / paid task)
   const isHiring = title.includes('[hiring]') || 
                   title.includes('hiring') || 
                   title.includes('[task]') || 
                   title.includes('paying') || 
+                  title.includes('internship') || 
+                  title.includes('intern') ||
                   title.includes('looking for a developer') || 
                   title.includes('need a developer') ||
-                  title.includes('looking to hire');
+                  title.includes('looking to hire') ||
+                  title.includes('bounty') ||
+                  (title.includes('$') && (title.includes('need') || title.includes('want') || title.includes('task')));
 
   // For subs where people post both offers and tasks
   if (!isHiring && (sub.toLowerCase() === 'forhire' || sub.toLowerCase() === 'slavelabour' || sub.toLowerCase() === 'freelance_forhire' || sub.toLowerCase() === 'jobbit')) {
