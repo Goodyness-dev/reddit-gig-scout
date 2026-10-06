@@ -7,7 +7,7 @@ const path = require('path');
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const INTERVAL_MS = (parseInt(process.env.CHECK_INTERVAL_SECONDS) || 45) * 1000;
-const PORT = process.env.PORT || 10000; // Render expects a port for Web Services
+const PORT = process.env.PORT || 10000;
 
 const SUBS_FILE = path.join(__dirname, 'subreddits.json');
 
@@ -54,24 +54,33 @@ const SKILL_RULES = [
   },
   {
     category: 'AI Training / Annotation / Evaluation',
-    keywords: ['annotation', 'data labeling', 'ai training', 'prompt', 'evaluation', 'rlhf', 'model review', 'dataset'],
+    keywords: ['annotation', 'data labeling', 'ai training', 'prompt engineer', 'evaluation', 'rlhf', 'model review', 'dataset'],
     pitch: (title, sub) => `Hi! I saw your post regarding: "${title}".\n\nI have direct experience in AI content evaluation, text classification, and data annotation with Atlas Capture and independent projects. High accuracy, strict guideline adherence, and edge-case reporting.\n\nEmail: adewolegoodness22@gmail.com\nReady to begin immediately!`
   },
   {
     category: 'Quick Tasks & General Gigs',
-    keywords: ['need help', 'quick task', 'fix bug', 'simple script', 'assist', 'side gig', 'small task'],
+    keywords: ['need help building', 'need developer', 'quick task', 'fix bug', 'simple script', 'side gig', 'small task'],
     pitch: (title, sub) => sub === 'slavelabour'
       ? `Comment on post: $bid\n\nDM to send:\nHi! I can help you knock this out right away. Computer Engineering student with broad software experience. Let me know!`
       : `Hi! Reaching out regarding: "${title}".\n\nI am available to resolve this for you immediately. Software developer with experience across web dev, debugging, and scripts.\n\nGitHub: https://github.com/Goodyness-dev\nEmail: adewolegoodness22@gmail.com`
   }
 ];
 
+// Cap seen posts to 1500 to prevent any memory growth
 const seenPosts = new Set();
+function addSeenPost(id) {
+  if (seenPosts.size > 1500) {
+    const firstItems = Array.from(seenPosts).slice(0, 500);
+    firstItems.forEach(item => seenPosts.delete(item));
+  }
+  seenPosts.add(id);
+}
+
 let isFirstRun = true;
 let lastUpdateId = 0;
 
 function sendTelegramMessage(text) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const postData = JSON.stringify({ chat_id: CHAT_ID, text: text, disable_web_page_preview: false });
     const req = https.request({
       hostname: 'api.telegram.org',
@@ -83,13 +92,12 @@ function sendTelegramMessage(text) {
       res.on('data', chunk => data += chunk);
       res.on('end', () => resolve(data));
     });
-    req.on('error', err => reject(err));
+    req.on('error', () => resolve(null));
     req.write(postData);
     req.end();
   });
 }
 
-// Telegram command listener (e.g. /add SideJobs, /list, /remove SideJobs)
 function pollTelegramCommands() {
   const req = https.request({
     hostname: 'api.telegram.org',
@@ -141,7 +149,7 @@ async function handleTelegramCommand(text) {
   } else if (cmd === '/list') {
     await sendTelegramMessage(`📋 Currently monitored subreddits (${monitoredSubs.length}):\n\n` + monitoredSubs.map(s => '• r/' + s).join('\n') + `\n\nTip: Send /add [sub] or /remove [sub] anytime!`);
   } else if (cmd === '/help') {
-    await sendTelegramMessage(`💡 Bot Commands:\n\n/list - View monitored subreddits\n/add [sub] - Add a subreddit (e.g. /add SideJobs)\n/remove [sub] - Remove a subreddit (e.g. /remove SideJobs)\n/status - Check scout health`);
+    await sendTelegramMessage(`💡 Bot Commands:\n\n/list - View monitored subreddits\n/add [sub] - Add a subreddit (e.g. /add SideJobs)\n/remove [sub] - Remove a subreddit\n/status - Check scout health`);
   } else if (cmd === '/status') {
     await sendTelegramMessage(`⚡ Bot is running live!\nTotal subreddits: ${monitoredSubs.length}\nCheck interval: ${INTERVAL_MS / 1000}s\nSeen posts: ${seenPosts.size}`);
   }
@@ -200,9 +208,29 @@ function matchJob(entry, sub) {
   const text = (entry.content || '').toLowerCase();
   const full = title + ' ' + text;
 
-  if (title.includes('[for hire]') || title.includes('[forhire]') || title.includes('for hire')) return null;
-  const isHiring = title.includes('[hiring]') || title.includes('hiring') || title.includes('[task]') || title.includes('paying') || title.includes('need') || title.includes('looking for');
-  if (!isHiring && (sub.toLowerCase() === 'forhire' || sub.toLowerCase() === 'sidejobs')) return null;
+  // STRICT HIRING FILTER: Exclude freelancers offering services, job seekers, and discussions
+  if (title.includes('[for hire]') || title.includes('[forhire]') || title.includes('[offer]') || title.includes('for hire')) {
+    return null;
+  }
+
+  // Exclude common discussion / career question posts on subreddits like jobbit
+  if (title.includes('career gap') || title.includes('is landing a job') || title.includes('0 callbacks') || title.includes('how to increase') || title.includes('is that normal')) {
+    return null;
+  }
+
+  // Positive hiring check
+  const isHiring = title.includes('[hiring]') || 
+                  title.includes('hiring') || 
+                  title.includes('[task]') || 
+                  title.includes('paying') || 
+                  title.includes('looking for a developer') || 
+                  title.includes('need a developer') ||
+                  title.includes('looking to hire');
+
+  // For subs where people post both offers and tasks
+  if (!isHiring && (sub.toLowerCase() === 'forhire' || sub.toLowerCase() === 'slavelabour' || sub.toLowerCase() === 'freelance_forhire' || sub.toLowerCase() === 'jobbit')) {
+    return null;
+  }
 
   for (const rule of SKILL_RULES) {
     for (const kw of rule.keywords) {
@@ -222,7 +250,7 @@ async function checkSubreddits() {
       const entries = await fetchSubredditRss(sub);
       for (const entry of entries) {
         if (!seenPosts.has(entry.id)) {
-          seenPosts.add(entry.id);
+          addSeenPost(entry.id);
           const match = matchJob(entry, sub);
           if (match) {
             console.log(`🎯 MATCH in r/${sub}: ${entry.title}`);
@@ -254,7 +282,6 @@ async function checkSubreddits() {
   }
 }
 
-// Minimal HTTP server so Render Web Service stays alive with health checks
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({
@@ -273,7 +300,6 @@ async function main() {
   console.log('Monitored subreddits:', monitoredSubs.join(', '));
   console.log(`Check interval: ${INTERVAL_MS / 1000}s`);
 
-  // Start Telegram command listener
   pollTelegramCommands();
 
   await checkSubreddits();
